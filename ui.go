@@ -87,6 +87,8 @@ func drawStatus(x, y, w int, o IObject) {
 	}
 	status := fmt.Sprintf(" %v LVL:%v (%v/%v) HP:%v/%v %v", o.GetType(), o.GetLvl(), o.GetExp(), o.GetExpLvl(), o.GetHp(), o.GetMaxHp(), dead)
 	conio.Screen().DrawAlignedString(x, y, w, status)
+	status = fmt.Sprintf("   Target - %v", o.FindTarget().GetType())
+	conio.Screen().DrawAlignedString(x, y+1, w, status)
 }
 
 func drawWindow(x, y, w, h int, title string, draw func(x, y, w, h int)) {

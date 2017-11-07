@@ -10,7 +10,7 @@ import (
 type TObject struct {
 	TBasic
 	items ItemList
-	dir   TDirection
+	fov   int
 }
 
 type THero struct {
@@ -27,21 +27,23 @@ type IObject interface {
 	GetMovementType() int
 	// PickUp(d TDirection) bool
 	IsDead() bool
+	// LookAround() []IObject
+	FindTarget() IObject
 }
 
 type IFighter interface {
-	Attack(d TDirection) bool
+	Attack() bool
 	SpinAttack() bool
 }
 
 type IMove interface {
-	Move(d TDirection) bool
+	Move() bool
 }
 
 var _ IPicker = (*THero)(nil)
 
 type IPicker interface {
-	PickUp(d TDirection) bool
+	PickUp() bool
 }
 
 var _ IPickable = (*TObject)(nil)
@@ -56,6 +58,7 @@ var _ IBasic = (*TBasic)(nil)
 
 type TCat struct {
 	TObject
+	dir TDirection
 }
 
 type TDog struct {
@@ -130,27 +133,60 @@ func (o *TObject) LookItem(d TDirection) (*TCell, IItems) {
 	return cell, object
 }
 
+// func (o *TObject) LookAround() IObject {
+// 	// target := []IObject{}
+// 	for i := 0; i <= o.fov; i++ {
+// 		o.Look()
+// 	}
+// }
+
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func Distance(o1, o2 IObject) int {
+	x1, y1 := o1.GetPos()
+	x2, y2 := o2.GetPos()
+	return Abs(x2 - x1 + y2 - y1)
+}
+
+func (o *TObject) FindTarget() IObject {
+	minTarget := IObject(gameMap.hero)
+	minDistance := Distance(o, minTarget)
+	for _, npc := range gameMap.npc {
+		d := Distance(o, npc)
+		if d == 0 || npc.IsDead() {
+			continue
+		}
+		if d < minDistance {
+			minTarget = npc
+			minDistance = d
+		}
+	}
+	return minTarget
+}
+
 func (o *TObject) Do() {
 	if o.__.(IObject).IsDead() {
 		return
 	}
 
 	fighter, ok := o.__.(IFighter)
-	if ok && fighter.Attack(o.dir) {
+	if ok && fighter.Attack() {
 		return
 	}
 	pick, ok := o.__.(IPicker)
-	if ok && pick.PickUp(o.dir) {
+	if ok && pick.PickUp() {
 		return
 	}
 	move, ok := o.__.(IMove)
-	if ok && move.Move(o.dir) {
+	if ok && move.Move() {
 		return
 	}
-
 }
-
-// func (o *TObject) LookAround(i int)
 
 func (o *TObject) GetMovementType() int {
 	return surfaceAll &^ surfaceWater &^ surfaceWall
@@ -158,10 +194,6 @@ func (o *TObject) GetMovementType() int {
 
 func (o *TObject) IsDead() bool {
 	return o.__.(IObject).GetHp() <= 0
-}
-
-func (o *TCat) RecieveDmg(i int) {
-	o.gainedDmg += i
 }
 
 func (o *TObject) RespondToPick() bool {
@@ -179,13 +211,12 @@ func newHero(x, y int) *THero {
 }
 
 func (o *THero) GetDmg() int {
-	log.Debug("getdmg")
 	return o.__.(IObject).GetStr()*3/5 + o.items.TotalDmg()
 }
 
-func (o *THero) Move(d TDirection) bool {
-	if !move(&o.TObject, d) {
-		// log.Debug("Hero ", o.__.(IObject).GetType(), " cant move")
+func (o *THero) Move() bool {
+	if !move(&o.TObject, o.dir) {
+		log.Debug(o.__.(IObject).GetType(), " cant move")
 		return false
 	}
 	return true
@@ -209,8 +240,9 @@ func (o *THero) SetDir(d TDirection) {
 
 func (o *THero) Draw() {
 	sprite := "H"
-	fg := conio.ColorRed
-	bg := conio.ColorBlack
+	fg, bg := conio.Screen().CellColor((o.x*2)+mapX, o.y+mapY)
+	fg = conio.ColorRed
+	// bg := conio.ColorDefault
 	if o.__.(IObject).IsDead() {
 		fg = conio.ColorDarkGray
 	}
@@ -234,6 +266,7 @@ func newCat(x, y int) *TCat {
 	o := &TCat{TObject: *newObject(x, y)}
 	o.lvl = 1
 	o.exp = 1
+	o.fov = 4
 	o.__ = o
 	log.Debug(fmt.Sprintf("%+v", o.__.(IObject)), " created ", x, " ", y)
 	return o
@@ -260,7 +293,11 @@ func (o *TCat) GetStr() int {
 	return 2 + o.__.(IObject).GetLvl()
 }
 
-func (o *TCat) Move(d TDirection) bool {
+func (o *TCat) RecieveDmg(i int) {
+	o.gainedDmg += i
+}
+
+func (o *TCat) Move() bool {
 	for i := 0; i < 4; i++ {
 		if move(&o.TObject, o.dir) {
 			return true
@@ -271,8 +308,8 @@ func (o *TCat) Move(d TDirection) bool {
 	return false
 }
 
-func (o *TCat) Attack(d TDirection) bool {
-	if !attack(&o.TObject, d) {
+func (o *TCat) Attack() bool {
+	if !attack(&o.TObject, o.dir) {
 		// log.Debug(o.__.(IObject).GetType(), " cant attack")
 		return false
 	}
@@ -282,15 +319,19 @@ func (o *TCat) Attack(d TDirection) bool {
 func (o *TCat) SpinAttack() bool {
 	return false
 }
-func (o *TCat) PickUp(d TDirection) bool {
-	if !pickup(&o.TObject, d) {
+func (o *TCat) PickUp() bool {
+	if !pickup(&o.TObject, o.dir) {
 		return false
 	}
 	return true
 }
 
 func (o *TCat) Do() {
-	o.dir = TDirection(rand.Intn(4))
+	// o.dir = TDirection(rand.Intn(4))
+	x, y := o.FindTarget().GetPos()
+	dx := x - o.x
+	dy := y - o.y
+	o.dir = NewDir(dx, dy)
 	o.TObject.Do()
 }
 
@@ -309,6 +350,10 @@ func newHuman(x, y int) *THuman {
 	o.__ = o
 	log.Debug(o.__.(IObject).GetType(), " created ", x, " ", y)
 	return o
+}
+
+func (o *THero) GetMovementType() int {
+	return surfaceAll&^surfaceWater&^surfaceWall | o.items.TotalMovementType()
 }
 
 func (o *THuman) GetType() string {

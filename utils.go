@@ -27,6 +27,19 @@ func (o TDirection) GetOffset() (int, int) {
 	return delta.x, delta.y
 }
 
+func NewDir(dx, dy int) TDirection {
+	if Abs(dx) > Abs(dy) {
+		if dx > 0 {
+			return dirRight
+		}
+		return dirLeft
+	}
+	if dy > 0 {
+		return dirDown
+	}
+	return dirUp
+}
+
 func drawObject(x, y int, str string, color, bgcolor conio.TColor) {
 	scr := conio.Screen()
 	c := scr.FgColor()

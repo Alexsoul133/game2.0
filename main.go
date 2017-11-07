@@ -18,7 +18,7 @@ var gameMap TMap
 var protoMap = ",,,, ,,,,,,,,,," +
 	", h      ,,,,,," +
 	",~F~     ,,,s,," +
-	" ,~~   , ,,,,,," +
+	" ,~~   , ,,b,,," +
 	",S,       ,,M,," +
 	" C,,     ,,,,,," +
 	" ,,  ,   ,,,,,," +
@@ -80,6 +80,10 @@ func create(r byte, x, y int) {
 	case 's':
 		ground = newGround(x, y)
 		item = newSword(x, y)
+
+	case 'b':
+		ground = newGround(x, y)
+		item = newBoots(x, y)
 	} //end
 	if object != nil {
 		addNpc(object)
@@ -110,7 +114,7 @@ func newMap() {
 ////////////////////////////////////////////////////
 func ai() {
 
-	gameMap.hero.Do()
+	// gameMap.hero.Do()
 	for _, npc := range gameMap.npc {
 		npc.Do()
 	}
@@ -142,25 +146,25 @@ func gameInit() {
 	conio.NewKeyboardAction("Up", "w", "", func(ev conio.TKeyboardEvent) bool {
 		// LookAt(dirUp)
 		gameMap.hero.SetDir(dirUp)
-
+		gameMap.hero.Do()
 		return true
 	})
 	conio.NewKeyboardAction("Down", "s", "", func(ev conio.TKeyboardEvent) bool {
 		// LookAt(dirDown)
 		gameMap.hero.SetDir(dirDown)
-
+		gameMap.hero.Do()
 		return true
 	})
 	conio.NewKeyboardAction("Left", "a", "", func(ev conio.TKeyboardEvent) bool {
 		// LookAt(dirLeft)
 		gameMap.hero.SetDir(dirLeft)
-
+		gameMap.hero.Do()
 		return true
 	})
 	conio.NewKeyboardAction("Right", "d", "", func(ev conio.TKeyboardEvent) bool {
 		// LookAt(dirRight)
 		gameMap.hero.SetDir(dirRight)
-
+		gameMap.hero.Do()
 		return true
 	})
 }
@@ -177,24 +181,23 @@ func main() {
 	scr := conio.NewScreen()
 	utils.Assert(scr != nil, "screen init failed")
 	defer scr.Close()
+	nextTime := time.Now()
 	// registerScreen(scr)
 	initialize()
 	newMap()
+
 	for !canClose {
 		draw()
-		time.Sleep(250 * time.Millisecond)
 		if evs.HasEvent() {
 			ev := evs.ReadEvent()
-			for evs.HasEvent() {
-				ev = evs.ReadEvent()
-			}
 			conio.HandleEvent(ev)
+		}
+		if time.Now().Before(nextTime) {
+			continue
 		}
 		if !gameover {
 			ai()
+			nextTime = nextTime.Add(1000 * time.Millisecond)
 		}
-		//msgLog = append(msgLog, fmt.Sprintf("%s %T", ev.String(), ev))
-		// log.Debug(fmt.Sprintf("%s %T", ev.String(), ev))
-		//handleEvent(ev)
 	}
 }

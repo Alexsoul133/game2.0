@@ -13,22 +13,18 @@ type IItems interface {
 }
 type ItemList []IItems
 
-func (o *ItemList) TotalDmg() int {
-	dmg := 0
-	for _, item := range *o {
-		dmg += item.GetDmg()
-	}
-	return dmg
-}
-
 var _ IItems = (*TItems)(nil)
 
 type TSword struct {
 	TItems
 }
 
+type TBoots struct {
+	TItems
+}
+
 func (o *TItems) GetMovementType() int {
-	return surfaceAll &^ surfaceWall
+	return 0
 }
 
 func (o *TItems) GetDmg() int {
@@ -74,21 +70,6 @@ func (o *TItems) Dmg() int {
 	return dmg
 }
 
-// func (o *TItems) IsDead() bool {
-// 	return false
-// }
-
-// func (o *TItems) Move(d TDirection) bool {
-// 	return false
-// }
-
-// func (o *TItems) PickUp(d TDirection) bool {
-// 	return false
-// }
-// func (o *TItems) Look(d TDirection) (*TCell, IObject) {
-// 	return nil, nil
-// }
-
 func (o *TItems) RespondToPick() bool {
 	deleteitem(o)
 	return true
@@ -102,11 +83,25 @@ func newItem(x, y int) *TItems {
 	return o
 }
 
+func (o *ItemList) TotalDmg() int {
+	dmg := 0
+	for _, item := range *o {
+		dmg += item.GetDmg()
+	}
+	return dmg
+}
+
+func (o *ItemList) TotalMovementType() int {
+	i := 0
+	for _, item := range *o {
+		i += item.GetMovementType()
+	}
+	return i
+}
+
 /////////////////////////////////////////////////////////
 func newSword(x, y int) *TSword {
 	o := &TSword{TItems: *newItem(x, y)}
-	o.x = x
-	o.y = y
 	o.__ = o
 	return o
 }
@@ -118,10 +113,16 @@ func (o *TSword) GetType() string {
 }
 
 /////////////////////////////////////////////////////////
-// func new(x, y int) *T {
-// 	o := &T{TItems: *newItem(x, y)}
-// 	o.x = x
-// 	o.y = y
-// 	o.__ = o
-// 	return o
-// }
+func newBoots(x, y int) *TBoots {
+	o := &TBoots{TItems: *newItem(x, y)}
+	o.__ = o
+	return o
+}
+
+func (o *TBoots) GetMovementType() int {
+	return surfaceWater | ^surfaceGrass
+}
+
+func (o *TBoots) GetType() string {
+	return "Boots"
+}
