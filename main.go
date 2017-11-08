@@ -17,7 +17,7 @@ var gameover = false
 var gameMap TMap
 var protoMap = ",,,, ,,,,,,,,,," +
 	", h      ,,,,,," +
-	",~F~     ,,,s,," +
+	",~F~     ,,,sss" +
 	" ,~~   , ,,b,,," +
 	",S,       ,,M,," +
 	" C,,     ,,,,,," +
@@ -198,6 +198,7 @@ func main() {
 		if !gameover {
 			ai()
 			nextTime = nextTime.Add(1000 * time.Millisecond)
+			// log.Info(randomInt(-1, 3))
 		}
 	}
 }

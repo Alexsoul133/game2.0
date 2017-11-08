@@ -1,15 +1,30 @@
 package main
 
-import "github.com/macroblock/garbage/conio"
+import (
+	"math/rand"
+
+	"github.com/macroblock/garbage/conio"
+)
+
+const (
+	qPoor        = -1
+	qRegular int = iota
+	qUnusual
+	qRare
+	qLegendary
+)
 
 type TItems struct {
 	TObject
+	quality               int
+	dmg, stamina, str, hp int
 }
 
 type IItems interface {
 	IObject
-	Dmg() int
+	// Dmg() int
 	RespondToPick() bool
+	GetQuality() string
 }
 type ItemList []IItems
 
@@ -28,7 +43,7 @@ func (o *TItems) GetMovementType() int {
 }
 
 func (o *TItems) GetDmg() int {
-	return 0
+	return o.dmg
 }
 
 func (o *TItems) GetStamina() int {
@@ -42,9 +57,6 @@ func (o *TItems) GetMaxHp() int {
 	return 5
 }
 
-func (o *TItems) GetHp() int {
-	return o.__.(IObject).GetMaxHp() - o.gainedDmg
-}
 func (o *TItems) RecieveDmg(i int) {
 }
 
@@ -59,15 +71,20 @@ func (o *TItems) GetType() string {
 	return "Garbage"
 }
 
-func (o *TObject) Dmg() int {
-	return 0
-}
-func (o *TItems) Dmg() int {
-	dmg := 0
-	for _, item := range o.items {
-		dmg += item.GetDmg()
+func (o *TItems) GetQuality() string {
+	switch o.quality {
+	case qPoor:
+		return "poor"
+	case qRegular:
+		return "regular"
+	case qUnusual:
+		return "unusual"
+	case qRare:
+		return "rare"
+	case qLegendary:
+		return "legendary"
 	}
-	return dmg
+	return ""
 }
 
 func (o *TItems) RespondToPick() bool {
@@ -77,6 +94,7 @@ func (o *TItems) RespondToPick() bool {
 
 func newItem(x, y int) *TItems {
 	o := &TItems{}
+	// o.quality = randomInt(-1, 3)
 	o.x = x
 	o.y = y
 	o.__ = o
@@ -102,14 +120,24 @@ func (o *ItemList) TotalMovementType() int {
 /////////////////////////////////////////////////////////
 func newSword(x, y int) *TSword {
 	o := &TSword{TItems: *newItem(x, y)}
+	o.quality = randomInt(-1, 3)
+	switch o.quality {
+	case qPoor:
+		o.dmg = 1 + rand.Intn(1)
+	case qRegular:
+		o.dmg = 2 + rand.Intn(2)
+	case qUnusual:
+		o.dmg = 4 + rand.Intn(3)
+	case qRare:
+		o.dmg = 7 + rand.Intn(4)
+	case qLegendary:
+		o.dmg = 12 + rand.Intn(5)
+	}
 	o.__ = o
 	return o
 }
-func (o *TSword) GetDmg() int {
-	return 4
-}
 func (o *TSword) GetType() string {
-	return "Sword"
+	return "sword"
 }
 
 /////////////////////////////////////////////////////////
@@ -120,9 +148,9 @@ func newBoots(x, y int) *TBoots {
 }
 
 func (o *TBoots) GetMovementType() int {
-	return surfaceWater | ^surfaceGrass
+	return surfaceWater
 }
 
 func (o *TBoots) GetType() string {
-	return "Boots"
+	return "boots"
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 
 	"github.com/macroblock/garbage/conio"
 )
@@ -83,13 +82,6 @@ type TPiranha struct {
 	TCat
 }
 
-func random(i int) bool {
-	if rand.Intn(100) < i {
-		return true
-	}
-	return false
-}
-
 ///////////////////////////////////////////
 
 func newObject(x, y int) *TObject {
@@ -139,19 +131,6 @@ func (o *TObject) LookItem(d TDirection) (*TCell, IItems) {
 // 		o.Look()
 // 	}
 // }
-
-func Abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-func Distance(o1, o2 IObject) int {
-	x1, y1 := o1.GetPos()
-	x2, y2 := o2.GetPos()
-	return Abs(x2 - x1 + y2 - y1)
-}
 
 func (o *TObject) FindTarget() IObject {
 	minTarget := IObject(gameMap.hero)
@@ -327,7 +306,9 @@ func (o *TCat) PickUp() bool {
 }
 
 func (o *TCat) Do() {
-	// o.dir = TDirection(rand.Intn(4))
+	if o.__.(IObject).IsDead() {
+		return
+	}
 	x, y := o.FindTarget().GetPos()
 	dx := x - o.x
 	dy := y - o.y

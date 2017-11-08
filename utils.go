@@ -2,6 +2,8 @@ package main
 
 import (
 	"math"
+	"math/rand"
+	"time"
 
 	"github.com/macroblock/garbage/conio"
 )
@@ -17,6 +19,34 @@ const (
 	dirDown
 	dirLeft
 )
+
+func random(i int) bool {
+	if rand.Intn(100) < i {
+		return true
+	}
+	return false
+}
+
+func randomInt(min, max int) int {
+	rand.Seed(int64(time.Now().Nanosecond() + len(gameMap.item) + time.Now().Nanosecond()))
+	// rand.Seed(time.Now().UTC().UnixNano())
+	res := min + rand.Intn(max-min)
+	log.Info("RandomInt ", res)
+	return res
+}
+
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func Distance(o1, o2 IObject) int {
+	x1, y1 := o1.GetPos()
+	x2, y2 := o2.GetPos()
+	return Abs(x2 - x1 + y2 - y1)
+}
 
 func (o TDirection) GetOffset() (int, int) {
 	o %= 4
@@ -181,6 +211,7 @@ func pickup(o *TObject, d TDirection) bool {
 	throw.Return(!pickable.RespondToPick())
 	o.items = append(o.items, item)
 	log.Info(o.__.(IObject).GetType(), " pick up ", item.GetType())
+	// log.Info(fmt.Sprintf("%v", item))
 	return true
 }
 

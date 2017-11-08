@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/macroblock/garbage/conio"
 	"github.com/macroblock/garbage/utils"
@@ -71,12 +73,18 @@ func draw() {
 		}
 		gameMap.hero.__.(IObject).Draw()
 	})
-	drawWindow(mapX-1, mapY-1+mapH+2+1, width-logWidth-1-1, len(gameMap.npc)*2+2+2, "[ NPC ]", func(x, y, w, h int) {
+	drawWindow(mapX-1, mapY-1+mapH+2+1, width-logWidth-1-1-1, len(gameMap.npc)*2+2+2, "[ NPC ]", func(x, y, w, h int) {
 		drawStatus(x, y, w, gameMap.hero.__.(IObject))
 		for i, npc := range gameMap.npc {
 			drawStatus(x, y+(i+1)*2, w, npc)
 		}
 	})
+	drawWindow(mapW*2+2+1+2, height, (logWidth/2)-1-1, 2+2*len(gameMap.hero.items), "[ INV "+strconv.Itoa(len(gameMap.hero.items))+"/infinite]", func(x, y, w, h int) {
+		for i, item := range gameMap.hero.items {
+			drawInvetory(x, y+(i*2), w, item)
+		}
+	})
+
 	scr.Flush()
 }
 
@@ -89,6 +97,13 @@ func drawStatus(x, y, w int, o IObject) {
 	conio.Screen().DrawAlignedString(x, y, w, status)
 	status = fmt.Sprintf("   Target - %v", o.FindTarget().GetType())
 	conio.Screen().DrawAlignedString(x, y+1, w, status)
+}
+
+func drawInvetory(x, y, w int, o IItems) {
+	inv := fmt.Sprintf("%v %v", strings.Title(o.GetQuality()), o.GetType())
+	conio.Screen().DrawAlignedString(x, y, w, inv)
+	inv = fmt.Sprintf("DMG: %v", o.GetDmg())
+	conio.Screen().DrawAlignedString(x, y+1, w, inv)
 }
 
 func drawWindow(x, y, w, h int, title string, draw func(x, y, w, h int)) {
