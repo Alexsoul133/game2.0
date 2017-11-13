@@ -14,20 +14,41 @@ const (
 	qLegendary
 )
 
+const (
+	slotUnequip TSlot = (1 << iota) >> 1
+	slotRightHand
+	slotLeftHand
+	slotHelmet
+	slotBody
+	slotLegs
+	slotFeets
+	slotGloves
+	slotNecklace
+	slotBack
+	slotAll = slotBack - 1
+)
+
 type TItems struct {
 	TObject
 	quality               int
 	dmg, stamina, str, hp int
+	slot                  TSlot //2hand? set?
 }
 
 type IItems interface {
 	IObject
 	// Dmg() int
 	RespondToPick() bool
+	RespondToEquip() bool
 	GetQuality() string
+	GetSlot() TSlot
 }
-type ItemList []IItems
 
+type Invetory []IItems
+
+type TSlot int //1 RightHand 2 lefthand 3 helmet 4 body 5 legs 6 feet 7 hands 8 necklace 9 back
+
+var _ IObject = (*TItems)(nil)
 var _ IItems = (*TItems)(nil)
 
 type TSword struct {
@@ -87,9 +108,21 @@ func (o *TItems) GetQuality() string {
 	return ""
 }
 
+func (o *TItems) GetSlot() TSlot {
+	return slotUnequip
+}
+
 func (o *TItems) RespondToPick() bool {
 	deleteitem(o)
 	return true
+}
+
+func (o *TItems) RespondToEquip() bool {
+	if o.__.(IItems).GetSlot() != slotUnequip {
+		return true
+	}
+	log.Info(o.GetType(), " is unquip")
+	return false
 }
 
 func newItem(x, y int) *TItems {
@@ -101,15 +134,17 @@ func newItem(x, y int) *TItems {
 	return o
 }
 
-func (o *ItemList) TotalDmg() int {
+func (o *Invetory) TotalDmg() int {
 	dmg := 0
 	for _, item := range *o {
-		dmg += item.GetDmg()
+		if item != nil {
+			dmg += item.GetDmg()
+		}
 	}
 	return dmg
 }
 
-func (o *ItemList) TotalMovementType() int {
+func (o *Invetory) TotalMovementType() int {
 	i := 0
 	for _, item := range *o {
 		i += item.GetMovementType()
@@ -140,6 +175,10 @@ func (o *TSword) GetType() string {
 	return "sword"
 }
 
+func (o *TSword) GetSlot() TSlot {
+	return slotRightHand | slotLeftHand
+}
+
 /////////////////////////////////////////////////////////
 func newBoots(x, y int) *TBoots {
 	o := &TBoots{TItems: *newItem(x, y)}
@@ -153,4 +192,8 @@ func (o *TBoots) GetMovementType() int {
 
 func (o *TBoots) GetType() string {
 	return "boots"
+}
+
+func (o *TBoots) GetSlot() TSlot {
+	return slotFeets
 }

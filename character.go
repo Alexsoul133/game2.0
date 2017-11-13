@@ -8,8 +8,9 @@ import (
 
 type TObject struct {
 	TBasic
-	items ItemList
-	fov   int
+	items     Invetory
+	equipment Invetory
+	// fov   int
 }
 
 type THero struct {
@@ -43,6 +44,9 @@ var _ IPicker = (*THero)(nil)
 
 type IPicker interface {
 	PickUp() bool
+	Equip(i int) bool
+	GetInvetory() Invetory
+	GetEquipment() Invetory
 }
 
 var _ IPickable = (*TObject)(nil)
@@ -184,14 +188,15 @@ func (o *TObject) RespondToPick() bool {
 func newHero(x, y int) *THero {
 	o := &THero{THuman: *newHuman(x, y)}
 	o.items = nil
+	o.items = append(o.items, newItem(0, 0))
 	o.__ = o
 
 	return o
 }
 
-func (o *THero) GetDmg() int {
-	return o.__.(IObject).GetStr()*3/5 + o.items.TotalDmg()
-}
+// func (o *THero) GetDmg() int {
+// 	return o.__.(IObject).GetStr()*3/5 + o.items.TotalDmg()
+// }
 
 func (o *THero) Move() bool {
 	if !move(&o.TObject, o.dir) {
@@ -232,12 +237,20 @@ func (o *THero) GetType() string {
 	return "Hero"
 }
 
-func (o *THero) GetInvetory() []string {
-	var items []string
-	for i := range o.items {
-		items = append(items, o.items[i].GetType())
-	}
-	return items
+func (o *THuman) GetInvetory() Invetory {
+	// var items []string
+	// for i := range o.items {
+	// 	items = append(items, o.items[i].GetType())
+	// }
+	return o.items
+}
+
+func (o *THuman) GetEquipment() Invetory {
+	// var equipment []string
+	// for i := range o.equipment {
+	// 	equipment = append(equipment, o.equipment[i].GetType())
+	// }
+	return o.equipment
 }
 
 /////////////////////////////////////////////////////
@@ -245,7 +258,7 @@ func newCat(x, y int) *TCat {
 	o := &TCat{TObject: *newObject(x, y)}
 	o.lvl = 1
 	o.exp = 1
-	o.fov = 4
+	// o.fov = 4
 	o.__ = o
 	log.Debug(fmt.Sprintf("%+v", o.__.(IObject)), " created ", x, " ", y)
 	return o
@@ -303,6 +316,7 @@ func (o *TCat) PickUp() bool {
 		return false
 	}
 	return true
+
 }
 
 func (o *TCat) Do() {
@@ -328,17 +342,23 @@ func newDog(x, y int) *TDog {
 
 func newHuman(x, y int) *THuman {
 	o := &THuman{TCat: *newCat(x, y)}
+	// o.items = append(o.items, newSword(0, 0))
+	// log.Panic(true, o.GetInvetory())
 	o.__ = o
 	log.Debug(o.__.(IObject).GetType(), " created ", x, " ", y)
 	return o
 }
 
 func (o *THero) GetMovementType() int {
-	return surfaceAll&^surfaceWater&^surfaceWall | o.items.TotalMovementType()
+	return surfaceAll&^surfaceWater&^surfaceWall | o.equipment.TotalMovementType()
 }
 
 func (o *THuman) GetType() string {
 	return "Human"
+}
+
+func (o *THuman) GetDmg() int {
+	return o.__.(IObject).GetStr()*3/5 + o.equipment.TotalDmg()
 }
 
 func (o *THuman) Draw() {
@@ -349,6 +369,28 @@ func (o *THuman) Draw() {
 		fg = conio.ColorDarkGray
 	}
 	drawObject(o.x, o.y, sprite, fg, bg)
+}
+
+func (o *THuman) Equip(i int) bool {
+	if !equip(&o.TObject, i) {
+		return false
+	}
+	return true
+}
+
+func (o *THuman) PickUp() bool {
+	if !pickup(&o.TObject, o.dir) {
+		return false
+	}
+	return true
+}
+
+func (o *THuman) Do() {
+	equip, ok := o.__.(IPicker)
+	if ok && equip.Equip(0) && o.items[0] != nil {
+		return
+	}
+	o.TCat.Do()
 }
 
 /////////////////////////////////////////////////////

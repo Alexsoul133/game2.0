@@ -139,8 +139,26 @@ func ai() {
 }
 
 func gameInit() {
-	conio.NewKeyboardAction("Status", "i", "", func(ev conio.TKeyboardEvent) bool {
-		log.Info(gameMap.hero.GetInvetory())
+	conio.NewKeyboardAction("Equip 0", "0", "", func(ev conio.TKeyboardEvent) bool {
+		gameMap.hero.Equip(0)
+		return true
+	})
+
+	conio.NewKeyboardAction("Equip 1", "1", "", func(ev conio.TKeyboardEvent) bool {
+		gameMap.hero.Equip(1)
+		return true
+	})
+	conio.NewKeyboardAction("Equip 2", "2", "", func(ev conio.TKeyboardEvent) bool {
+		gameMap.hero.Equip(2)
+		return true
+	})
+	conio.NewKeyboardAction("Equip 3", "3", "", func(ev conio.TKeyboardEvent) bool {
+		gameMap.hero.Equip(3)
+		return true
+	})
+
+	conio.NewKeyboardAction("Equip", "i", "", func(ev conio.TKeyboardEvent) bool {
+		log.Info(gameMap.hero.GetEquipment())
 		return true
 	})
 	conio.NewKeyboardAction("Up", "w", "", func(ev conio.TKeyboardEvent) bool {
@@ -171,7 +189,6 @@ func gameInit() {
 
 func main() {
 	// log.Add(zlogger.Build().Format("(~m) ~l:~s~x~e\n").Done())
-	log.Info("PING")
 	err := conio.Init()
 	utils.Assert(err == nil, "conio init failed")
 	defer conio.Close()

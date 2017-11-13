@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"math/rand"
 	"time"
 
@@ -162,6 +161,70 @@ func findItem(x, y int) IItems {
 	return nil
 }
 
+func fromInvetory(i int, object *TObject) {
+	object.items[i] = nil
+	newItem := []IItems{}
+	for _, item := range object.items {
+		if item != nil {
+			newItem = append(newItem, item)
+		}
+	}
+	object.items = newItem
+}
+
+func fromEquipment(i int, object *TObject) {
+	object.equipment[i] = nil
+	newItem := []IItems{}
+	for _, item := range object.equipment {
+		if item != nil {
+			newItem = append(newItem, item)
+		}
+	}
+	object.equipment = newItem
+}
+
+func equip(o *TObject, i int) bool {
+	defer throw.Catch()
+	throw.Panic(o == nil, "Object is nil")
+	throw.Return(getCap(o.items)-1 < i)
+
+	// for _, invetory := range o.items {
+	// 	if invetory == o.items[i] {
+	// 		log.Debug("Found item")
+	// 		break
+	// 	}
+	// }
+	throw.Return(!o.items[i].RespondToEquip())
+
+	for i1, equipment := range o.__.(IPicker).GetEquipment() {
+		if equipment.GetSlot() == o.items[i].GetSlot() {
+			o.items = append(o.items, equipment)
+			fromEquipment(i1, o)
+			// slice := o.items[i+1:]
+			// o.items = append(o.items[:i-1], o.items[i+1:])
+		}
+
+	}
+	o.equipment = append(o.__.(IPicker).GetEquipment(), o.items[i])
+	fromInvetory(i, o)
+	log.Info(o.__.(IObject).GetType(), " equip ", o.items[i].GetType())
+	// o.items[i] = nil
+	return true
+}
+
+func getLen(o Invetory) int {
+	for i, item := range o {
+		if item == nil {
+			return i + 1
+		}
+	}
+	return len(o)
+}
+
+func getCap(o Invetory) int {
+	return cap(o)
+}
+
 func move(o *TObject, d TDirection) bool {
 	defer throw.Catch()
 	throw.Panic(o == nil, "Object is nil")
@@ -213,23 +276,4 @@ func pickup(o *TObject, d TDirection) bool {
 	log.Info(o.__.(IObject).GetType(), " pick up ", item.GetType())
 	// log.Info(fmt.Sprintf("%v", item))
 	return true
-}
-
-func pathfinder(o *TObject, x, y int) TDirection {
-	defer throw.Catch()
-	throw.Panic(o == nil, "Object is nil")
-	dx := o.x - x
-	dy := o.y - y
-	throw.Return(dx == 0 && dy == 0)
-
-	if math.Abs(float64(dx)) <= math.Abs(float64(dy)) { //move horizontal
-		if dx > 0 {
-			return dirRight
-		}
-		return dirLeft
-	}
-	if dy > 0 { //move vertical
-		return dirDown
-	}
-	return dirUp
 }

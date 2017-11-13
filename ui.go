@@ -79,9 +79,15 @@ func draw() {
 			drawStatus(x, y+(i+1)*2, w, npc)
 		}
 	})
-	drawWindow(mapW*2+2+1+2, height, (logWidth/2)-1-1, 2+2*len(gameMap.hero.items), "[ INV "+strconv.Itoa(len(gameMap.hero.items))+"/infinite]", func(x, y, w, h int) {
+	drawWindow(mapW*2+2+1+2, height, (logWidth/2)-1-1, 2+2*len(gameMap.hero.items), "[ INV "+strconv.Itoa(getLen(gameMap.hero.items))+"/"+strconv.Itoa(getCap(gameMap.hero.items))+" ]", func(x, y, w, h int) {
 		for i, item := range gameMap.hero.items {
 			drawInvetory(x, y+(i*2), w, item)
+		}
+	})
+
+	drawWindow((mapW*2+2+1+2)*2+2, height, (logWidth/2)-1-1, 2+2*len(gameMap.hero.equipment), "[ EQUIP "+strconv.Itoa(getLen(gameMap.hero.equipment))+"/"+strconv.Itoa(getCap(gameMap.hero.equipment))+" ]", func(x, y, w, h int) {
+		for i, item := range gameMap.hero.equipment {
+			drawEquipment(x, y+(i*2), w, item)
 		}
 	})
 
@@ -93,7 +99,7 @@ func drawStatus(x, y, w int, o IObject) {
 	if o.IsDead() {
 		dead = "dead"
 	}
-	status := fmt.Sprintf(" %v LVL:%v (%v/%v) HP:%v/%v %v", o.GetType(), o.GetLvl(), o.GetExp(), o.GetExpLvl(), o.GetHp(), o.GetMaxHp(), dead)
+	status := fmt.Sprintf(" %v LVL:%v DMG: %v HP:%v/%v %v", o.GetType(), o.GetDmg(), o.GetExpLvl(), o.GetHp(), o.GetMaxHp(), dead)
 	conio.Screen().DrawAlignedString(x, y, w, status)
 	status = fmt.Sprintf("   Target - %v", o.FindTarget().GetType())
 	conio.Screen().DrawAlignedString(x, y+1, w, status)
@@ -101,6 +107,13 @@ func drawStatus(x, y, w int, o IObject) {
 
 func drawInvetory(x, y, w int, o IItems) {
 	inv := fmt.Sprintf("%v %v", strings.Title(o.GetQuality()), o.GetType())
+	conio.Screen().DrawAlignedString(x, y, w, inv)
+	inv = fmt.Sprintf("DMG: %v", o.GetDmg())
+	conio.Screen().DrawAlignedString(x, y+1, w, inv)
+}
+
+func drawEquipment(x, y, w int, o IItems) {
+	inv := fmt.Sprintf("%v: %v %v", o.GetSlot(), strings.Title(o.GetQuality()), o.GetType())
 	conio.Screen().DrawAlignedString(x, y, w, inv)
 	inv = fmt.Sprintf("DMG: %v", o.GetDmg())
 	conio.Screen().DrawAlignedString(x, y+1, w, inv)
